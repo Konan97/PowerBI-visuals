@@ -1,3 +1,11 @@
+'''
+This script processes fault data from Qbay First Run, filters and cleans the data, and saves it to a CSV file for further analysis. 
+It imports fault data from REL3.1 and REL3.2, merges them, and categorizes the faults based on predefined categories. 
+The script also handles missing values and duplicates before saving the final dataset.
+
+author: Neehar Namjoshi
+maintainer: Yuting Sun
+'''
 import pandas as pd
 import numpy as np
 import os
@@ -85,7 +93,65 @@ TT1_725B = [136757,
 138738,
 138739]
 
-REL3_3 = []
+REL3_3 = [138784,
+138803,
+138823,
+138842,
+138863,
+138880,
+138897,
+138917,
+138938,
+138948,
+138957,
+138965,
+138979,
+138995,
+139005,
+139017,
+139031,
+139041,
+139051,
+139061,
+139072,
+139082,
+139093,
+139102,
+139112,
+139122,
+139132,
+139142,
+139147,
+139157,
+139167,
+139173,
+139183,
+139188,
+139193,
+139203,
+139211,
+139222,
+139238,
+139243,
+139253,
+139259,
+139269,
+139273,
+139278,
+139283,
+139288,
+139294,
+139298,
+139304,
+139308,
+139313,
+139319,
+139323,
+139328,
+139334,
+139340,
+139345,
+139350]
 process_list = ('EOL','AirSuspension', 'FHC', 'FAS', 'VISP', 'WAE')
 
 # Import REL3.1 Faults
