@@ -155,10 +155,10 @@ REL3_3 = [138784,
 process_list = ('EOL','AirSuspension', 'FHC', 'FAS', 'VISP', 'WAE')
 
 # Import REL3.1 Faults
-directory_path = 'C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\REL3.1'
+# directory_path = 'C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\REL3.1'
 
-df = pd.read_csv(directory_path + '\\rel_3.1.csv')
-print("Rel 3.1 imported successfully!")
+# df = pd.read_csv(directory_path + '\\rel_3.1.csv')
+# print("Rel 3.1 imported successfully!")
 
 # Import REL3.2 Faults
 directory_path = 'C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\REL3.2'
@@ -171,21 +171,26 @@ for folder_name in os.listdir(directory_path):
             file_path = os.path.join(folder_path, file_name)
             tmp = pd.read_csv(file_path, skiprows=11, low_memory=False)
             tmp['VIN'] = pd.to_numeric(tmp['VIN'], errors='coerce')
-            tmp['software'] = np.where(tmp['VIN'].isin(TT1_725B), 'REL7_725B_TT1', 'REL3.2')
-            tmp['software'] = np.where(tmp['VIN'].isin(REL3_3), 'REL3.3', 'REL3.2')
+            tmp['software'] = np.where(tmp['VIN'].isin(TT1_725B), 'REL7_725B_TT1','REL3.2')
             data.append(tmp)
 
 df2 = pd.concat(data, ignore_index=True)
+
+# When adding new software, rename it here
+df2['software'] = np.where(df2['VIN'].isin(REL3_3), 'REL3.3', df2['software'])
+
 df2.drop_duplicates(subset=['VIN', 'Process', 'Phase', 'Test', 'FaultCode'], inplace=True)
-df.dropna(subset=['TestTime'], axis = 0)
+# df.dropna(subset=['TestTime'], axis = 0)
 df2 = df2[df2['Process'].isin(process_list)]
 df2.drop(['results','Unnamed: 15', 'Unnamed: 14'], inplace = True, axis = 1)
-
+#df2 = df2.sort_values(by = ['VIN'], ascending = True)
 # Concat REL3.1 & REL3.2
-df = pd.concat([df,df2])
-
+# df = pd.concat([df,df2])
+df = df2
 # software check
 print(df['software'].value_counts())
+#print(df['VIN'][df['software'] == 'REL3.3'].value_counts())
+#print(df['VIN'][df['software'] == 'REL3.2'].value_counts())
 
 #  Clear missing/bad quality data from df and df2
 
@@ -204,7 +209,8 @@ df['script_ver'] = df['Cal'].str.split(" ").str[1]
 df.rename({'Cal':'Script_version'}, inplace = True, axis = 1)
 
 print(df['TestTime'].info())
-df.dropna(subset = ['TestTime'],axis = 0, inplace = True)
+#df['TestTime'] = np.where(df['software'] == 'REL3.3'),'2024-04-17',df['TestTime'])
+#df.dropna(subset = ['TestTime'],axis = 0, inplace = True)
 
 # Mapping/Grouping ECU
 catLPC = ['LPC', 'IPDA', 'PDS', 'PDM', 'IRPA', 'RPDS', 'RPDM', 'NFCA', 'IDDA', 'DDS', 'DDM', 'IRDA', 'RDDS', 'RDDM', 'ADSS', 'POT', 'TRM', 'DLPR', 'DLPL', 
@@ -228,7 +234,7 @@ catmisc = ['RCSP','PSRL','FDM','SCRL','PSRR','SCRR']
 
 
 print(df.columns)
-
+print(df['VIN'][df['software'] == 'REL3.3'].value_counts())
 #ToCSV
 df.to_csv('C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\faults.csv')
 
