@@ -151,7 +151,45 @@ REL3_3 = [138784,
 139334,
 139340,
 139345,
-139350]
+139350,
+139356,
+139361,
+139370,
+139377,
+139381,
+139387,
+139392,
+139397,
+139403,
+139407,
+139411,
+139416,
+139420,
+139425,
+139427,
+139433,
+139439,
+139442,
+139446,
+139448,
+139453,
+139459,
+139468,
+139472,
+139477,
+139484,
+139489,
+139502,
+139507,
+139512,
+139523,
+139542,
+139547,
+139557,
+139562,
+139577,
+139581,
+139597]
 process_list = ('EOL','AirSuspension', 'FHC', 'FAS', 'VISP', 'WAE')
 
 # Import REL3.1 Faults
@@ -172,18 +210,19 @@ for folder_name in os.listdir(directory_path):
             tmp = pd.read_csv(file_path, skiprows=11, low_memory=False)
             tmp['VIN'] = pd.to_numeric(tmp['VIN'], errors='coerce')
             tmp['software'] = np.where(tmp['VIN'].isin(TT1_725B), 'REL7_725B_TT1','REL3.2')
+            tmp['software'] = np.where(tmp['VIN'].isin(REL3_3), 'REL3.3', tmp['software'])
             data.append(tmp)
 
 df2 = pd.concat(data, ignore_index=True)
+#print(df2[['VIN','TestTime']][(df2['VIN'] == 139120) & (df2['Process'] == 'EOL')]).value_counts()
+df2.dropna(subset=['TestTime'], axis = 0, inplace = True)
+df2.drop_duplicates(subset=['VIN', 'Process', 'Phase', 'Test', 'FaultCode', 'TestTime'], inplace=True)
 
-# When adding new software, rename it here
-df2['software'] = np.where(df2['VIN'].isin(REL3_3), 'REL3.3', df2['software'])
-
-df2.drop_duplicates(subset=['VIN', 'Process', 'Phase', 'Test', 'FaultCode'], inplace=True)
 # df.dropna(subset=['TestTime'], axis = 0)
 df2 = df2[df2['Process'].isin(process_list)]
 df2.drop(['results','Unnamed: 15', 'Unnamed: 14'], inplace = True, axis = 1)
 #df2 = df2.sort_values(by = ['VIN'], ascending = True)
+
 # Concat REL3.1 & REL3.2
 # df = pd.concat([df,df2])
 df = df2
@@ -199,16 +238,12 @@ df['SHORTDESC'] = df['SHORTDESC'].fillna(0)
 
 # ECU column, week/date column, duplicates drop, keep only 6 Process/Stations 
 
-# ECU
-
 df['ECU'] = df['Test'].str.split(" ").str[0]
 
 
 # Cal, when iFlex got new script, keep the version, drop date portion
 df['script_ver'] = df['Cal'].str.split(" ").str[1]
 df.rename({'Cal':'Script_version'}, inplace = True, axis = 1)
-
-print(df['TestTime'].info())
 #df['TestTime'] = np.where(df['software'] == 'REL3.3'),'2024-04-17',df['TestTime'])
 #df.dropna(subset = ['TestTime'],axis = 0, inplace = True)
 
@@ -234,27 +269,14 @@ catmisc = ['RCSP','PSRL','FDM','SCRL','PSRR','SCRR']
 
 
 print(df.columns)
-print(df['VIN'][df['software'] == 'REL3.3'].value_counts())
+#print(df['VIN'][df['software'] == 'REL3.3'].value_counts())
+
 #ToCSV
 df.to_csv('C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\faults.csv')
 
 print(df.shape)
 
-#print(df['software'][df['VIN'] == 137709].value_counts())
-
 print("Pre-processing Succesful!")
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -272,10 +294,6 @@ print("Pre-processing Succesful!")
 # print(result_df)
 # print(result_df.shape)
 # print(df.shape)
-
-
-
-
 
 
 
