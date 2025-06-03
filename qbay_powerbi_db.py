@@ -9,7 +9,7 @@ maintainer: Yuting Sun
 import pandas as pd
 import numpy as np
 import os
-import project_mix
+import project_mix, ECU_list
 
 
 process_list = ('EOL','AirSuspension', 'FHC', 'FAS', 'VISP', 'WAE')
@@ -43,7 +43,7 @@ df2.drop_duplicates(subset=['VIN', 'Process', 'Phase', 'Test', 'FaultCode', 'Tes
 
 # df.dropna(subset=['TestTime'], axis = 0)
 df2 = df2[df2['Process'].isin(process_list)]
-df2.drop(['results','Unnamed: 15', 'Unnamed: 14'], inplace = True, axis = 1)
+df2.drop(['results','Unnamed: 15'], inplace = True, axis = 1)
 #df2 = df2.sort_values(by = ['VIN'], ascending = True)
 
 # Concat REL3.1 & REL3.2
@@ -62,7 +62,7 @@ df['SHORTDESC'] = df['SHORTDESC'].fillna(0)
 # ECU column, week/date column, duplicates drop, keep only 6 Process/Stations 
 
 df['ECU'] = df['Test'].str.split(" ").str[0]
-
+df['Solution'] = df['ECU'].map(ECU_list.ECUs)
 
 # Cal, when iFlex got new script, keep the version, drop date portion
 df['script_ver'] = df['Cal'].str.split(" ").str[1]
