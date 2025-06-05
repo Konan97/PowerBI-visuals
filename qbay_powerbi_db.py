@@ -6,6 +6,11 @@ The script also handles missing values and duplicates before saving the final da
 author: Neehar Namjoshi
 maintainer: Yuting Sun
 '''
+'''activate the virtual environment before running this script
+Pandas and numpy libraries are located inside the virtual environment
+`.venv\Scripts\activate` to activate the virtual environment
+`pip install pandas numpy` if you need to install the libraries'''
+
 import pandas as pd
 import numpy as np
 import os
@@ -61,7 +66,7 @@ df['SHORTDESC'] = df['SHORTDESC'].fillna(0)
 
 # ECU column, week/date column, duplicates drop, keep only 6 Process/Stations 
 
-df['ECU'] = df['Test'].str.split(" ").str[0]
+df['ECU'] = df['Test'].str.split(" ").str[0] # check ECUs from the list
 df['Solution'] = df['ECU'].map(ECU_list.ECUs)
 
 # Cal, when iFlex got new script, keep the version, drop date portion
