@@ -17,7 +17,7 @@ import os
 import project_mix, ECU_list
 
 
-process_list = ('EOL','AirSuspension', 'FHC', 'FAS', 'VISP', 'WAE')
+process_list = ('EOL','AirSuspension', 'FHC', 'FAS', 'VISP', 'WAE', 'ReFlash')
 
 # Import REL3.1 Faults
 # directory_path = 'C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\REL3.1'
@@ -26,34 +26,42 @@ process_list = ('EOL','AirSuspension', 'FHC', 'FAS', 'VISP', 'WAE')
 # print("Rel 3.1 imported successfully!")
 
 # Import REL3.2 Faults
-directory_path = 'C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\REL3.2'
+# directory_path = 'C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\REL3.2'
 
-data = []
-for folder_name in os.listdir(directory_path):
-    folder_path = os.path.join(directory_path, folder_name)
-    if os.path.isdir(folder_path):
-        for file_name in os.listdir(folder_path):
-            file_path = os.path.join(folder_path, file_name)
-            tmp = pd.read_csv(file_path, skiprows=11, low_memory=False)
-            tmp['VIN'] = pd.to_numeric(tmp['VIN'], errors='coerce')
-            tmp['software'] = np.where(tmp['VIN'].isin(project_mix.TT1_725B), '725B_TT1','REL3.2')
-            tmp['software'] = np.where(tmp['VIN'].isin(project_mix.REL3_3), 'REL3.3', tmp['software'])
-            tmp['software'] = np.where(tmp['VIN'].isin(project_mix.TT2_725B), '725B_TT2', tmp['software'])
-            data.append(tmp)
+def dataframe_from_csv(directory_path):
+    """Helper function to read a CSV file and return a DataFrame."""
+    SW_version = directory_path.split('\\')[-1]
+    data = []
+    for folder_name in os.listdir(directory_path):
+        folder_path = os.path.join(directory_path, folder_name)
+        if os.path.isdir(folder_path):
+            for file_name in os.listdir(folder_path):
+                file_path = os.path.join(folder_path, file_name)
+                tmp = pd.read_csv(file_path, skiprows=11, low_memory=False)
+                tmp['VIN'] = pd.to_numeric(tmp['VIN'], errors='coerce')
+                tmp['software'] = np.where(tmp['VIN'].isin(project_mix.TT1_725B), '725B_TT1', SW_version)
+                tmp['software'] = np.where(tmp['VIN'].isin(project_mix.REL3_3), 'REL3.3', tmp['software'])
+                tmp['software'] = np.where(tmp['VIN'].isin(project_mix.TT2_725B), '725B_TT2', tmp['software'])
+                data.append(tmp)
+    data = pd.concat(data, ignore_index=True)
+    return data
 
-df2 = pd.concat(data, ignore_index=True)
+data3_2 = dataframe_from_csv('C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\REL3.2')
+data3_3 = dataframe_from_csv('C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\REL3.3')
+
+result_df = pd.concat([data3_2, data3_3], ignore_index=True)
 #print(df2[['VIN','TestTime']][(df2['VIN'] == 139120) & (df2['Process'] == 'EOL')]).value_counts()
-df2.dropna(subset=['TestTime'], axis = 0, inplace = True)
-df2.drop_duplicates(subset=['VIN', 'Process', 'Phase', 'Test', 'FaultCode', 'TestTime'], inplace=True)
+result_df.dropna(subset=['TestTime'], axis = 0, inplace = True)
+result_df.drop_duplicates(subset=['VIN', 'Process', 'Phase', 'Test', 'FaultCode', 'TestTime'], inplace=True)
 
 # df.dropna(subset=['TestTime'], axis = 0)
-df2 = df2[df2['Process'].isin(process_list)]
-df2.drop(['results','Unnamed: 15'], inplace = True, axis = 1)
+result_df = result_df[result_df['Process'].isin(process_list)]
+result_df.drop(['results','Unnamed: 15'], inplace = True, axis = 1)
 #df2 = df2.sort_values(by = ['VIN'], ascending = True)
 
 # Concat REL3.1 & REL3.2
 # df = pd.concat([df,df2])
-df = df2
+df = result_df
 # software check
 print(df['software'].value_counts())
 #print(df['VIN'][df['software'] == 'REL3.3'].value_counts())
@@ -66,7 +74,8 @@ df['SHORTDESC'] = df['SHORTDESC'].fillna(0)
 
 # ECU column, week/date column, duplicates drop, keep only 6 Process/Stations 
 
-df['ECU'] = df['Test'].str.split(" ").str[0] # check ECUs from the list
+#df['ECU'] = df['Test'].str.split(" ").str[0] # check ECUs from the list
+df['ECU'] = df['Test'].apply(lambda ecu: next((i for i in ecu.split(" ") if i in ECU_list.ECUs), None))                                                               
 df['Solution'] = df['ECU'].map(ECU_list.ECUs)
 
 # Cal, when iFlex got new script, keep the version, drop date portion

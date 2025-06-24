@@ -15,7 +15,7 @@ ECUs = {'AUD': 'Conx', 'DHU': 'Conx', 'DHUM': 'Conx', 'DHUH': 'Conx', 'ETCM': 'C
         'DGWA': 'SWEP', 'VESC': 'SWEP', 'DLPR': 'Tophat', 'HCML': 'Tophat', 'HCMR': 'Tophat', 'HOD': 'Tophat', 'HUD': 'Tophat', 'OHC': 'Tophat', 'OHLC': 'Tophat', 'OHRL': 'Tophat', 
         'OHRR': 'Tophat', 'OHTL': 'Tophat', 'OHTR': 'Tophat', 'PSMD': 'Tophat', 'PSMP': 'Tophat', 'RML': 'Tophat', 'RMR': 'Tophat', 'SWM': 'Tophat', 'TTLL': 'Tophat', 'TTLR': 'Tophat', 
         'WPC': 'Tophat', 'CRSM': 'Tophat', 'CSD': 'Tophat', 'FLL': 'SVA', 'FLR': 'SVA', 'FLCW': 'SVA', 'ADSS': 'SWEP', 'FGWA': 'SWEP', 'FGWM': 'SWEP', 'DGWM': 'SWEP', 'BTLL': 'Tophat', 
-        'BTLR': 'Tophat', 'DLPL': 'Tophat', 'ALL': 'ME', 'ECOS': 'ME', 'FAS': 'ME', 'Vehicle': 'ME'}
+        'BTLR': 'Tophat', 'DLPL': 'Tophat'}
 
 # for key, value in Solution.items():
 #     for i in value:
