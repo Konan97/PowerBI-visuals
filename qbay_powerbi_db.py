@@ -30,7 +30,6 @@ process_list = ('EOL','AirSuspension', 'FHC', 'FAS', 'VISP', 'WAE', 'ReFlash')
 
 def dataframe_from_csv(directory_path):
     """Helper function to read a CSV file and return a DataFrame."""
-    SW_version = directory_path.split('\\')[-1]
     data = []
     for folder_name in os.listdir(directory_path):
         folder_path = os.path.join(directory_path, folder_name)
@@ -39,15 +38,16 @@ def dataframe_from_csv(directory_path):
                 file_path = os.path.join(folder_path, file_name)
                 tmp = pd.read_csv(file_path, skiprows=11, low_memory=False)
                 tmp['VIN'] = pd.to_numeric(tmp['VIN'], errors='coerce')
-                tmp['software'] = np.where(tmp['VIN'].isin(project_mix.TT1_725B), '725B_TT1', SW_version)
+                tmp['software'] = np.where(tmp['VIN'] >= 143523, 'REL3.3', 'REL3.2')
+                tmp['software'] = np.where(tmp['VIN'].isin(project_mix.TT1_725B), '725B_TT1', tmp['software'])
                 tmp['software'] = np.where(tmp['VIN'].isin(project_mix.REL3_3), 'REL3.3', tmp['software'])
                 tmp['software'] = np.where(tmp['VIN'].isin(project_mix.TT2_725B), '725B_TT2', tmp['software'])
                 data.append(tmp)
     data = pd.concat(data, ignore_index=True)
     return data
 
-data3_2 = dataframe_from_csv('C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\REL3.2')
-data3_3 = dataframe_from_csv('C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\REL3.3')
+data3_2 = dataframe_from_csv("C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\MasterRepairman - Channel1\\REL3.2")
+data3_3 = dataframe_from_csv("C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\MasterRepairman - Channel1\\REL3.3")
 
 result_df = pd.concat([data3_2, data3_3], ignore_index=True)
 #print(df2[['VIN','TestTime']][(df2['VIN'] == 139120) & (df2['Process'] == 'EOL')]).value_counts()
@@ -109,7 +109,7 @@ print(df.columns)
 #print(df['VIN'][df['software'] == 'REL3.3'].value_counts())
 
 #ToCSV
-df.to_csv('C:\\Users\\ysun98\\Volvo Cars\\MasterRepairman - Channel1\\faults.csv')
+df.to_csv("C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\MasterRepairman - Channel1\\faults.csv")
 
 print(df.shape)
 
