@@ -1,0 +1,8 @@
+[snowflake_account]
+account = "VOLVOCARS-MANUFACTURINGANALYTICS"
+user = "YSUN98@VOLVOCARS.COM"
+authenticator = "externalbrowser"
+role = "SELF_SERVICE_USER"
+warehouse = "REPORTING"
+database = "MANUFACTURING_ENTERPRISE_DATA_PRODUCTS"
+schema = "BIS_ITEMS"

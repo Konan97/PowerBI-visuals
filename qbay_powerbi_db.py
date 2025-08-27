@@ -46,10 +46,11 @@ def dataframe_from_csv(directory_path):
     data = pd.concat(data, ignore_index=True)
     return data
 
-data3_2 = dataframe_from_csv("C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\MasterRepairman - Channel1\\REL3.2")
+#data3_2 = dataframe_from_csv("C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\MasterRepairman - Channel1\\REL3.2")
 data3_3 = dataframe_from_csv("C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\MasterRepairman - Channel1\\REL3.3")
 
-result_df = pd.concat([data3_2, data3_3], ignore_index=True)
+#result_df = pd.concat([data3_2, data3_3], ignore_index=True)
+result_df = data3_3
 #print(df2[['VIN','TestTime']][(df2['VIN'] == 139120) & (df2['Process'] == 'EOL')]).value_counts()
 result_df.dropna(subset=['TestTime'], axis = 0, inplace = True)
 result_df.drop_duplicates(subset=['VIN', 'Process', 'Phase', 'Test', 'FaultCode', 'TestTime'], inplace=True)
