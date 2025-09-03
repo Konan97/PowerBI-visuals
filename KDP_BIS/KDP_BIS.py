@@ -52,11 +52,13 @@ def getTable(session: snowpark.Session):
 
 def KDP_from_csv(directory_path):
     """Helper function to read a CSV file and return a DataFrame."""
-    KDP_df = pd.read_csv(directory_path, skiprows=8, low_memory=False)
+    
+    KDP_df = pd.read_excel(directory_path, skiprows=8)
     # KDP_to_BIS = {'Part Number': 'Text', 'Part type': 'Rel pos', 'ECU': 'bartender_xml_identifier', 'bartender_xml_identifier': 'bis_item'}
     # modify KDP columns
+    KDP_df = KDP_df[~KDP_df['Part Number'].isin([32218512, 32375204])]  # remove rows with Part Number 32218512 or 32375204
     KDP_df['Part Number'] = KDP_df['Part Number'].astype(str)
-
+    
 
     return KDP_df
 
@@ -84,6 +86,7 @@ def create_new_row(row):
                 # Need to handle potential NaN values in 'ECU' column
                 if pd.notna(col_value):
                     # Use a conditional check to avoid error if the key doesn't exist
+                    new_row['ECU'] = col_value
                     if "$" + str(col_value) in BIS_df['bartender_xml_identifier'].values:
                         new_row[KDP_to_BIS[KDP_to_BIS[col_name]]] = BIS_df[BIS_df['bartender_xml_identifier'] == "$" + str(col_value)]['bis_item'].iloc[0]
                     else:
@@ -108,7 +111,8 @@ if __name__ == "__main__":
        'SWP5': 165}
     
     # imported KDP file
-    directory_path = "C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\Desktop\\KDP_BIS\\Preserie-725B_PP11CH(Preserie-725B_PP11CH).csv"
+    
+    directory_path = "C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\Desktop\\KDP_BIS\\Preserie-725B_PP11CH.xlsx"
     KDP_df = KDP_from_csv(directory_path)
     BIS_df = BIS_from_snowflake()
     # Process
@@ -120,4 +124,4 @@ if __name__ == "__main__":
     print(new_rows_df.head(20))
 
     # output to CSV
-    new_rows_df.to_csv("C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\Desktop\\KDP_BIS\\BIS_export.csv")
+    new_rows_df.to_csv("C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\Desktop\\KDP_BIS\\BIS_export_new.csv")
