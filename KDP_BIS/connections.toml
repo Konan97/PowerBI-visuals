@@ -1,6 +1,5 @@
 [snowflake_account]
 account = "VOLVOCARS-MANUFACTURINGANALYTICS"
-user = "YSUN98@VOLVOCARS.COM"
 authenticator = "externalbrowser"
 role = "SELF_SERVICE_USER"
 warehouse = "REPORTING"
