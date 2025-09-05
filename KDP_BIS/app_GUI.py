@@ -76,8 +76,8 @@ class MainApp(QMainWindow):
                 raise ValueError("No file dropped. Please drop an Excel file.")
             else: 
                 self.kdp_file_path = self.drop_label.file_path
-                KDP_BIS.run_process(self.kdp_file_path, self.user_input.text())
-                self.statusBar().showMessage("Process completed successfully.")
+                output_directory = KDP_BIS.Comparison(self.kdp_file_path, self.user_input.text()).run_process()
+                self.statusBar().showMessage("Process completed successfully. Output saved to: " + output_directory)
         except Exception as e:
             self.statusBar().showMessage(str(e))
 

@@ -12,6 +12,8 @@ class Comparison(object):
     def __init__(self, directory_path, user_input):
         self.directory_path = directory_path
         self.user_input = user_input
+        self.KDP_df = pd.DataFrame()
+        self.BIS_df = pd.DataFrame()
         self.output_columns = ['Item', 'Item Type', 'Version', 'Model', 'No', 'Type', 'Text',
         'Base file', 'Rel pos', 'Length', 'Nr.', 'Cd', 'Condition',
         'Descr. PML', 'Neg', 'Base file condition', 'Pop Base file',
@@ -66,21 +68,20 @@ class Comparison(object):
 
     def KDP_from_csv(self, directory_path):
         """Helper function to read a CSV file and return a DataFrame."""
-        
-        KDP_df = pd.read_excel(directory_path, skiprows=8)
+        tmp_df = pd.read_excel(directory_path, skiprows=8)
         # KDP_to_BIS = {'Part Number': 'Text', 'Part type': 'Rel pos', 'ECU': 'bartender_xml_identifier', 'bartender_xml_identifier': 'bis_item'}
         # modify KDP columns
-        KDP_df = KDP_df[~KDP_df['Part Number'].isin([32218512, 32375204])]  # remove rows with Part Number 32218512 or 32375204
-        KDP_df['Part Number'] = KDP_df['Part Number'].astype(str)
+        tmp_df = tmp_df[~tmp_df['Part Number'].isin([32218512, 32375204])]  # remove rows with Part Number 32218512 or 32375204
+        tmp_df['Part Number'] = tmp_df['Part Number'].astype(str)
 
-        return KDP_df
+        return tmp_df
 
     def BIS_from_snowflake(self, user_input):
         session = self.getConnection(user_input)
-        BIS_df = self.getTable(session)
-        BIS_df['text_steering'] = BIS_df['text_steering'].str.replace(' ', '')
+        tmp_df = self.getTable(session)
+        tmp_df['text_steering'] = tmp_df['text_steering'].str.replace(' ', '')
         session.close()
-        return BIS_df
+        return tmp_df
 
     def create_new_row(self, row):
         # Mapping dictionary from KDP to BIS
@@ -110,17 +111,19 @@ class Comparison(object):
 
         return new_row
 
-    def run_process(self, directory_path, user_input):
+    def run_process(self):
         # imported KDP file
-        KDP_df = self.KDP_from_csv(directory_path)
-        BIS_df = self.BIS_from_snowflake(user_input)
+        self.KDP_df = self.KDP_from_csv(self.directory_path)
+        self.BIS_df = self.BIS_from_snowflake(self.user_input)
         # Process
         # 'Part Number' from the filtered KDP dataframe is not in the 'text_steering' column of the BIS dataframe.
-        temp = KDP_df[~KDP_df.apply(lambda row: row['Part Number'] in BIS_df[BIS_df['bartender_xml_identifier'] == "$" + str(row['ECU'])]['text_steering'].values, axis=1)]
-        print(temp.head(20))
+        temp = self.KDP_df[~self.KDP_df.apply(lambda row: row['Part Number'] in self.BIS_df[self.BIS_df['bartender_xml_identifier'] == "$" + str(row['ECU'])]['text_steering'].values, axis=1)]
+        #print(temp.head(20))
         new_rows_list = temp.apply(lambda row: self.create_new_row(row), axis=1).tolist()
         new_rows_df = pd.DataFrame(new_rows_list)
         print(new_rows_df.head(20))
 
         # output to CSV
-        new_rows_df.to_csv("C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\Desktop\\KDP_BIS\\BIS_export_725B_PP12CH.csv")
+        self.directory_path = re.sub(r'\.xlsx?$', '_output.csv', self.directory_path)
+        new_rows_df.to_csv(self.directory_path)
+        return self.directory_path
