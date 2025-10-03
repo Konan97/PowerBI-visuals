@@ -26,22 +26,28 @@ class Comparison(object):
         'SWP5': 165}
 
     def getConnection(self, user_input):
-        connections = {}
-        try:
-            with open('connections.toml', 'rb') as f:
-                connections = tomllib.load(f)
-            print(connections)
-        except FileNotFoundError:
-            print("connections.toml file not found.")
+        connections = {"account": "VOLVOCARS-MANUFACTURINGANALYTICS",
+            "authenticator": "externalbrowser",
+            "role": "SELF_SERVICE_USER",
+            "warehouse": "REPORTING",
+            "database": "MANUFACTURING_ENTERPRISE_DATA_PRODUCTS",
+            "schema": "BIS_ITEMS"}
+        # try:
+        #     with open('connections.toml', 'rb') as f:
+        #         connections = tomllib.load(f)
+        #     print(connections)
+        # except FileNotFoundError:
+        #     print("connections.toml file not found.")
 
         connection_parameters = {
-            "account": connections['snowflake_account']['account'],
+            "account": connections['account'],
             "user": user_input,
-            "role": connections['snowflake_account']['role'],
-            "database": connections['snowflake_account']['database'],
-            "schema": connections['snowflake_account']['schema'],
-            "warehouse": connections['snowflake_account']['warehouse'],
-            "authenticator": connections['snowflake_account']['authenticator']
+            "role": connections['role'],
+            "database": connections['database'],
+            "schema": connections['schema'],
+            "warehouse": connections['warehouse'],
+            "authenticator": connections['authenticator']
+            
         }
         session = Session.builder.configs(connection_parameters).create()
         return session

@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QMainWindow, 
                              QFormLayout, QLineEdit, QLabel, QVBoxLayout)
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 import KDP_BIS
 
 # Only needed for access to command line arguments
@@ -79,7 +80,10 @@ class MainApp(QMainWindow):
                 output_directory = KDP_BIS.Comparison(self.kdp_file_path, self.user_input.text()).run_process()
                 self.statusBar().showMessage("Process completed successfully. Output saved to: " + output_directory)
         except Exception as e:
-            self.statusBar().showMessage(str(e))
+            if str(e)[:5] == "25001":
+                self.statusBar().showMessage("Snowflake connection error. Please check your credentials.")
+            else:
+                self.statusBar().showMessage(str(e))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -87,6 +91,6 @@ if __name__ == "__main__":
     # Create a Qt widget, which will be our window.
     window = MainApp()
     window.show()  # IMPORTANT!!!!! Windows are hidden by default.
-
+    window.setWindowIcon(QIcon('favicon.ico'))
     # Start the event loop.
     app.exec()

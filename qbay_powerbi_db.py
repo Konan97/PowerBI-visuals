@@ -40,7 +40,7 @@ def dataframe_from_csv(directory_path):
                 tmp['VIN'] = pd.to_numeric(tmp['VIN'], errors='coerce')
                 tmp['software'] = np.where(tmp['VIN'] >= 143523, 'REL3.3', 'REL3.2')
                 tmp['software'] = np.where(tmp['VIN'].isin(project_mix.TT1_725B), '725B_TT1', tmp['software'])
-                tmp['software'] = np.where(tmp['VIN'].isin(project_mix.REL3_3), 'REL3.3', tmp['software'])
+                tmp['software'] = np.where(tmp['VIN'].isin(project_mix.PP_725B), '725B_PP', tmp['software'])
                 tmp['software'] = np.where(tmp['VIN'].isin(project_mix.TT2_725B), '725B_TT2', tmp['software'])
                 data.append(tmp)
     data = pd.concat(data, ignore_index=True)
@@ -115,37 +115,3 @@ df.to_csv("C:\\Users\\YSUN98\\OneDrive - Volvo Cars\\MasterRepairman - Channel1\
 print(df.shape)
 
 print("Pre-processing Succesful!")
-
-
-
-# all_categories = catLPC + catVCU + catVCU_sub_1 + catVCU_sub_2 + catVCU_sub_3 + catHIC + catBPD_PS + catPPD_PS + catHIC_1 + catHPB_1 + catDHU + catTCAM + catFIOC + catmisc
-
-# # Filter the DataFrame to include only faults in the defined categories
-# filtered_df = df[df['ECU'].isin(all_categories)]
-
-# # Group by VIN and Fault, and count occurrences
-# grouped_df = filtered_df.groupby(['VIN']).filter(lambda x: len(x) > 2)
-
-# # Combine the grouped DataFrame with the original DataFrame to include rows with 2 or fewer occurrences
-# result_df = pd.concat([grouped_df, df[~df['VIN'].isin(grouped_df['VIN'])]])
-
-# print(result_df)
-# print(result_df.shape)
-# print(df.shape)
-
-
-
-# # To Excel
-# #df_3_1 = df_tot[df_tot['software'] == 'Rel 3.1']
-# #df_3_2 = df_tot[df_tot['software'] == 'Rel 3.2']
-
-# #df_3_1.to_csv('/content/drive/MyDrive/software/df_3-1.csv')
-# #df_3_2.to_csv('/content/drive/MyDrive/software/df_3-2.csv')
-
-# from datetime import date
-# today = date.today()
-# format_date = today.strftime("%m-%d")
-
-## file_path = '/content/drive/MyDrive/software/'
-## file_name = f'df_tot_{format_date}.csv'
-## df_tot.to_csv(file_path + file_name)
