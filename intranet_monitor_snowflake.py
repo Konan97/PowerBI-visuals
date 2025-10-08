@@ -1,7 +1,7 @@
 import time
-from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QMainWindow, 
+from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QMainWindow, QMessageBox,
                              QFormLayout, QLineEdit, QTextEdit, QVBoxLayout, QProgressBar)
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, QMetaObject, Qt
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QIcon
 
 # Only needed for access to command line arguments
@@ -125,6 +125,7 @@ class WorkerThread(QObject):
                 try:
                     if (data['REGISTRATION_POINT'] == '31550').any():
                         self.progress.emit(f'MIX {mix_number} has reached the registration point.')
+                        
                         self.is_running = False
                         break
                     else:
@@ -295,9 +296,18 @@ class MainApp(QMainWindow):
                 pass
             self.worker_thread = None
         
+        self.show_popup("Monitoring Finished", "Your car has reached the registration point or Monitoring is ended.")
         self.busy_bar.setVisible(False)
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
+    
+    def show_popup(self, title, message):
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        msg_box.setStandardButtons(QMessageBox.Ok)
+        msg_box.exec_()
 
 
 if __name__ == "__main__":
