@@ -1,7 +1,7 @@
 import time
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QMainWindow, 
-                             QFormLayout, QLineEdit, QTextEdit, QVBoxLayout)
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
+                             QFormLayout, QLineEdit, QTextEdit, QVBoxLayout, QProgressBar)
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, QMetaObject, Qt
 from PyQt5.QtGui import QIcon
 
 # Only needed for access to command line arguments
@@ -18,15 +18,20 @@ class WorkerThread(QObject):
     finished = pyqtSignal(str)
     progress = pyqtSignal(str)
 
+    # default signals
     is_running = True
 
-    def __init__(self, user_input, mix_number):
+    def __init__(self, user_input: str = None, mix_number: str = None):
+        super().__init__()
+        # make running an instance attribute so multiple workers don't share it
+        self.is_running = True
+        # Use the constructor arguments so each new WorkerThread gets current inputs
         self.user_input = user_input
         self.mix_number = mix_number
         self.conn = None
         self.session = None
 
-    def getConnection(self):
+    def getConnection(self, user_input=None) -> snowpark.Session:
         connections = {"account": "VOLVOCARS-MANUFACTURINGANALYTICS",
             "authenticator": "externalbrowser",
             "role": "SELF_SERVICE_USER",
@@ -37,7 +42,7 @@ class WorkerThread(QObject):
 
         connection_parameters = {
             "account": connections['account'],
-            "user": self.user_input,
+            "user": user_input,
             "role": connections['role'],
             "database": connections['database'],
             "schema": connections['schema'],
@@ -77,13 +82,7 @@ class WorkerThread(QObject):
 
     @pyqtSlot()
     def run_task(self):
-        """Long-running task executed inside the worker thread.
-
-        Uses self.user_input and self.mix_number (provided at construction).
-        Creates the Snowpark Session on this thread, polls for BODY_EVENTS,
-        emits `progress` updates and `finished` when done. Ensures the
-        session is closed in a finally block.
-        """
+        """Long-running task executed inside the worker thread."""
         # Defensive defaults
         mix_number = getattr(self, 'mix_number', None)
         user_input = getattr(self, 'user_input', None)
@@ -94,7 +93,7 @@ class WorkerThread(QObject):
 
         # Create session on worker thread
         try:
-            self.session = self.getConnection()
+            self.session = self.getConnection(user_input)
         except Exception as e:
             self.finished.emit(f'Failed to create Snowflake session: {e}')
             return
@@ -105,7 +104,7 @@ class WorkerThread(QObject):
 
         # Optionally fetch the ORDER_EVENTS row for the mix to get the body number
         try:
-            car_fyon = self.getTable(self.session, 'VCC.PROD_CONTROL.ORDER_EVENTS', None)
+            BODY_df = self.getTable(self.session, 'VCC.PROD_CONTROL.ORDER_EVENTS', None)
         except Exception as e:
             # emit error and close session in finally
             self.finished.emit(f'Failed to fetch order events: {e}')
@@ -119,42 +118,31 @@ class WorkerThread(QObject):
         try:
             # Main polling loop
             while getattr(self, 'is_running', True):
-                try:
-                    body_number = None
-                    # Support a couple of shapes for car_fyon
-                    if isinstance(car_fyon, dict) and 'BODY_NUMBER' in car_fyon:
-                        body_number = car_fyon['BODY_NUMBER']
-                        if hasattr(body_number, 'values'):
-                            body_number = body_number.values[0]
-                    else:
-                        # assume pandas DataFrame / Series-like
-                        body_number = car_fyon['BODY_NUMBER'].values[0]
-
-                    data = self.getTable(self.session, 'VCC.PROD_CONTROL.BODY_EVENTS', body_number)
-                except Exception as query_err:
-                    # transient query error: emit progress and retry
-                    self.progress.emit(f'Query error: {query_err}')
-                    time.sleep(5)
-                    continue
+                body_number = BODY_df['BODY_NUMBER'].values[0]
+                data = self.getTable(self.session, 'VCC.PROD_CONTROL.BODY_EVENTS', body_number)
 
                 # Check final registration point
                 try:
                     if (data['REGISTRATION_POINT'] == '31550').any():
                         self.progress.emit(f'MIX {mix_number} has reached the registration point.')
                         self.is_running = False
-                        self.finished.emit(f'MIX {mix_number} monitoring finished.')
                         break
                     else:
                         latest_loc = data.loc[data['LOCAL_UPDATE_TIMESTAMP'] == data['LOCAL_UPDATE_TIMESTAMP'].max()]
-                        self.progress.emit(f'MIX {mix_number} is still in production. Current status:\n{latest_loc.to_string()}\n')
+
+                        desc = latest_loc['REGISTRATION_POINT_DESCRIPTION'].to_string()
+                        ts = latest_loc['LOCAL_UPDATE_TIMESTAMP'].to_string()
+                        self.progress.emit(f"MIX {mix_number} is still in production. Current status:\n{desc}\n{ts}\n")
+                        # Responsive sleep: check every 1s so stop requests are handled quickly
+                        for _ in range(120):
+                            if not getattr(self, 'is_running', False):
+                                break
+                            time.sleep(1)
+                        
                 except Exception as proc_err:
                     self.progress.emit(f'Data processing error: {proc_err}')
-
-                # Sleep with interrupt checks
-                for _ in range(10):
-                    if not getattr(self, 'is_running', False):
-                        break
-                    time.sleep(1)
+            print('Exited monitoring loop.')
+            self.finished.emit(f'MIX {mix_number} monitoring finished.')
 
         except Exception as e:
             self.finished.emit(f'Unexpected error during monitoring: {e}')
@@ -168,9 +156,19 @@ class WorkerThread(QObject):
 
     @pyqtSlot()
     def stop_task(self):
-        """Stop the task."""
-        self._is_running = False
-        self.status_signal.emit("Task stopped.")
+        """Slot to request the worker stop. Executes on the worker thread."""
+        # Set the running flag so the run loop exits promptly
+        self.is_running = False
+        # Close session if open
+        try:
+            if self.session is not None:
+                try:
+                    self.session.close()
+                except Exception:
+                    pass
+                self.session = None
+        except Exception:
+            pass
 
 
         
@@ -186,7 +184,7 @@ class MainApp(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
-        self.status_label = QTextEdit("Status: Ready")
+        
         # Snowflake Credentials form
         self.form_layout = QFormLayout()
         self.user_account = QLineEdit()
@@ -202,10 +200,12 @@ class MainApp(QMainWindow):
         self.start_button = QPushButton("Start Monitoring")
         self.stop_button = QPushButton("Stop Monitoring")
 
-        main_layout.addWidget(self.start_button)
-        main_layout.addWidget(self.stop_button)
+        # Busy indicator (indeterminate progress bar)
+        self.busy_bar = QProgressBar()
+        self.busy_bar.setRange(0, 0)  # indeterminate mode
+        self.busy_bar.setVisible(False)
 
-        self.start_button_button.clicked.connect(self.start_task)
+        self.start_button.clicked.connect(self.start_task)
         self.stop_button.clicked.connect(self.stop_task)
 
         # Status Bar
@@ -214,34 +214,62 @@ class MainApp(QMainWindow):
 
         # Main layout assembly
         main_layout.addLayout(self.form_layout)
-
+        main_layout.addWidget(self.start_button)
+        main_layout.addWidget(self.stop_button)
+        main_layout.addWidget(self.busy_bar)
         # Threading setup
         self.worker = None
         self.worker_thread = None
     
     @pyqtSlot()
     def start_task(self):
+        # Prevent creating a new worker if a previous thread object still exists
+        if self.worker_thread is not None:
+            self.status_bar.showMessage("Previous worker still shutting down. Please wait...")
+            return
 
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(True)
 
-        self.status_label.setText("Task started...")
+        self.status_bar.showMessage("Task started...")
+        # Show busy indicator
+        try:
+            self.busy_bar.setVisible(True)
+        except Exception:
+            pass
 
         self.worker_thread = QThread()
-        self.worker = WorkerThread()
+
+        self.worker = WorkerThread(self.user_account.text(), self.mix_input.text())
         self.worker.moveToThread(self.worker_thread)
 
         self.worker_thread.started.connect(self.worker.run_task)
-        
-        self.worker.status_signal.connect(self.update_status)
-        self.worker.result_signal.connect(self.update_results)
         self.worker.finished.connect(self.task_finished)
+        # Connect worker signals
+        self.worker.progress.connect(self.update_results)
+        # Optionally also mirror progress to status label
+        self.worker.progress.connect(self.update_status)
 
         self.worker_thread.start()
 
+    @pyqtSlot()
+    def stop_task(self):
+        """Stop monitoring: request the worker to stop and update UI."""
+        if not self.worker or not self.worker_thread:
+            return
+        self.worker.stop_task()
+        self.worker_thread.quit()
+        
+
+        # Update UI: don't re-enable Start here; wait for task_finished to clean up
+        self.status_bar.showMessage("Stopping...")
+        self.busy_bar.setVisible(True)   # optional
+        self.start_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
+
     @pyqtSlot(str)
     def update_status(self, message):
-        self.status_label.setText(message)
+        self.status_bar.showMessage(message)
 
     @pyqtSlot(str)
     def update_results(self, message):
@@ -249,13 +277,28 @@ class MainApp(QMainWindow):
     
     @pyqtSlot()
     def task_finished(self):
-        self.status_label.setText("Task finished.")
-        self.worker_thread.quit()
-        self.worker_thread.wait()
+        self.status_bar.showMessage("Task finished.")
 
-        self.worker = None
-        self.worker_thread = None
+        # Ensure thread stops and cleaned up
+        if self.worker is not None:
+            try:
+                self.worker.deleteLater()
+            except Exception:
+                pass
+            self.worker = None
+        if self.worker_thread is not None:
+            try:
+                self.worker_thread.quit()
+                self.worker_thread.wait()
+                self.worker_thread.deleteLater()
+            except Exception:
+                pass
+            self.worker_thread = None
         
+        self.busy_bar.setVisible(False)
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
