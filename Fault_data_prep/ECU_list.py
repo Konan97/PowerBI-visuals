@@ -11,6 +11,7 @@ ECUs = {'AUD': 'Conx', 'DHU': 'Conx', 'DHUM': 'Conx', 'DHUH': 'Conx', 'ETCM': 'C
 'LPA': 'SWEP', 'LPC': 'SWEP', 'PGWA': 'SWEP', 'PGWM': 'SWEP', 'BPD': 'SWEP', 'PPD': 'SWEP', 'SGA': 'SWEP', 'DGWA': 'SWEP', 'VESC': 'SWEP', 'DLPR': 'Tophat', 'HCML': 'Tophat', 'HCMR': 'Tophat', 'HOD': 'Tophat', 'HUD': 'Tophat', 'OHC': 'Tophat', 'OHLC': 'Tophat', 'OHRL': 'Tophat', 'OHRR': 'Tophat', 'OHTL': 'Tophat', 'OHTR': 'Tophat', 'PSMD': 'Tophat', 'PSMP': 'Tophat', 'RML': 'Tophat', 'RMR': 'Tophat', 'SWM': 'Tophat', 'TTLL': 'Tophat', 'TTLR': 'Tophat', 'WPC': 'Tophat', 'CRSM': 'Tophat', 'CSD': 'Tophat', 'FLL': 'SVA', 'FLR': 'SVA', 'FLCW': 'SVA', 'ADSS': 'SWEP', 'FGWA': 'SWEP', 'FGWM': 'SWEP', 'DGWM': 'SWEP', 'BTLL': 'Tophat', 'BTLR': 'Tophat', 'DLPL': 
 'Tophat', 'ALL': 'ME', 'ECOS': 'ME', 'FAS': 'ME', 'Vehicle': 'ME'}
 
+ECU_list = ['AUD', 'DHU', 'DHUM', 'DHUH', 'ETCM', 'PAK', 'TCA', 'BBS', 'BCMA', 'CCMB', 'DDM', 'FMDM', 'NFCA', 'PDM', 'POT', 'PSCM', 'RBCM', 'RDDM', 'RPDM', 'SUM', 'TRM', 'GCCC', 'GHCA', 'HLCM', 'HVBM', 'IHFA', 'IHRA', 'TVRL', 'TVRR', 'FSRR', 'ADPU', 'RSRL', 'RSRR', 'SRS', 'SRSM', 'SRSR', 'FIOC', 'PGWX', 'HIA', 'HIB', 'HIC', 'HPA', 'HPB', 'LPA', 'LPC', 'PGWA', 'PGWM', 'BPD', 'PPD', 'SGA', 'DGWA', 'VESC', 'DLPR', 'HCML', 'HCMR', 'HOD', 'HUD', 'OHC', 'OHLC', 'OHRL', 'OHRR', 'OHTL', 'OHTR', 'PSMD', 'PSMP', 'RML', 'RMR', 'SWM', 'TTLL', 'TTLR', 'WPC', 'CRSM', 'CSD', 'FLL', 'FLR', 'FLCW', 'ADSS', 'FGWA', 'FGWM', 'DGWM', 'BTLL', 'BTLR', 'DLPL', 'ALL', 'ECOS', 'FAS', 'Vehicle']
 # for key, value in Solution.items():
 #     for i in value:
 #         ECUs[i] = key

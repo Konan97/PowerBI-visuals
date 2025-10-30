@@ -39,6 +39,7 @@ def dataframe_from_csv(directory_path):
                 tmp = pd.read_csv(file_path, skiprows=11, low_memory=False)
                 tmp['VIN'] = pd.to_numeric(tmp['VIN'], errors='coerce')
                 tmp['software'] = np.where(tmp['VIN'] >= 143523, 'REL3.3', 'REL3.2')
+                tmp['software'] = np.where(tmp['VIN'].isin(project_mix.REL10), 'REL10', tmp['software'])
                 tmp['software'] = np.where(tmp['VIN'].isin(project_mix.TT1_725B), '725B_TT1', tmp['software'])
                 tmp['software'] = np.where(tmp['VIN'].isin(project_mix.PP_725B), '725B_PP', tmp['software'])
                 tmp['software'] = np.where(tmp['VIN'].isin(project_mix.TT2_725B), '725B_TT2', tmp['software'])

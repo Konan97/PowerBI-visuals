@@ -74,12 +74,18 @@ class Comparison(object):
 
     def KDP_from_csv(self, directory_path):
         """Helper function to read a CSV file and return a DataFrame."""
-        tmp_df = pd.read_excel(directory_path, skiprows=8)
+        # tmp_df = pd.read_excel(directory_path, skiprows=8)
+        if directory_path.endswith('.csv'):
+            tmp_df = pd.read_csv(directory_path)
+        else:
+            tmp_df = pd.read_excel(directory_path, skiprows=8)
         # KDP_to_BIS = {'Part Number': 'Text', 'Part type': 'Rel pos', 'ECU': 'bartender_xml_identifier', 'bartender_xml_identifier': 'bis_item'}
         # modify KDP columns
+        if 'In/Out' in tmp_df.columns:
+            tmp_df = tmp_df[tmp_df['In/Out'] == 'In']  # filter rows where In/Out is 'In'
         tmp_df = tmp_df[~tmp_df['Part Number'].isin([32218512, 32375204])]  # remove rows with Part Number 32218512 or 32375204
         tmp_df['Part Number'] = tmp_df['Part Number'].astype(str)
-
+        print(tmp_df)
         return tmp_df
 
     def BIS_from_snowflake(self, user_input):
@@ -88,12 +94,26 @@ class Comparison(object):
         tmp_df['text_steering'] = tmp_df['text_steering'].str.replace(' ', '')
         session.close()
         return tmp_df
+    
+    def create_ECU(self, KDP_df):
+        # Create a new column 'ECU' based on the first three characters of 'Part Number'
+        ECU_list = ['AUD', 'DHU', 'DHUM', 'DHUH', 'ETCM', 'PAK', 'TCA', 'BBS', 'BCMA', 'CCMB', 'DDM', 'FMDM', 'NFCA', 'PDM', 'POT', 'PSCM', 'RBCM', 'RDDM', 'RPDM', 'SUM', 'TRM', 'GCCC', 'GHCA', 'HLCM', 'HVBM', 'IHFA', 'IHRA', 'TVRL', 'TVRR', 'FSRR', 'ADPU', 'RSRL', 'RSRR', 'SRS', 'SRSM', 'SRSR', 'FIOC', 'PGWX', 'HIA', 'HIB', 'HIC', 'HPA', 'HPB', 'LPA', 'LPC', 'PGWA', 'PGWM', 'BPD', 'PPD', 'SGA', 'DGWA', 'VESC', 'DLPR', 'HCML', 'HCMR', 'HOD', 'HUD', 'OHC', 'OHLC', 'OHRL', 'OHRR', 'OHTL', 'OHTR', 'PSMD', 'PSMP', 'RML', 'RMR', 'SWM', 'TTLL', 'TTLR', 'WPC', 'CRSM', 'CSD', 'FLL', 'FLR', 'FLCW', 'ADSS', 'FGWA', 'FGWM', 'DGWM', 'BTLL', 'BTLR', 'DLPL', 'ALL', 'ECOS', 'FAS', 'Vehicle']
+        pattern = f"({'|'.join(ECU_list)})"
+        KDP_df['ECU'] = KDP_df['Part Desc.'].str.findall(pattern, flags=0)
+        KDP_df = KDP_df.dropna()
+        self.debug_path = re.sub(r'\.csv?$', '_debug.csv', self.directory_path)
+        KDP_df['ECU'] = KDP_df['ECU'].apply(lambda x: x[0] if len(x) > 0 else 'ECU Not Found')
+        KDP_df.to_csv(self.debug_path)
+        
+        return KDP_df
 
     def create_new_row(self, row):
         # Mapping dictionary from KDP to BIS
         KDP_to_BIS = {'Part Number': 'Text', 'Part type': 'Rel pos', 'ECU': 'bartender_xml_identifier', 'bartender_xml_identifier': 'bis_item'}
         new_row = {'Version': 1, 'Model': 7, 'Neg': False, 'Base file condition': '', 'Pop Base file': '',
         'Starting position': 0, 'Length.1': 0, 'Plass.week from': 190001, 'To plass.week': 210001, 'Shift in': '', 'Shift out': ''}
+        
+
         for col_name in self.KDP_df.columns: # Iterate through original KDP columns to check mapping
             if col_name in KDP_to_BIS:
             # Access the value from the current row being processed by apply
@@ -130,6 +150,6 @@ class Comparison(object):
         print(new_rows_df.head(20))
 
         # output to CSV
-        self.directory_path = re.sub(r'\.xlsx?$', '_output.csv', self.directory_path)
+        self.directory_path = re.sub(r'\.(xlsx?|csv)$', '_output.csv', self.directory_path)
         new_rows_df.to_csv(self.directory_path)
         return self.directory_path
