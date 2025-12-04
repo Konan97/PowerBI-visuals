@@ -50,9 +50,7 @@ python app_GUI.py
 
 2. The application window will open with a drag-and-drop area
 
-3. Drag and drop either:
-   - A KDP Excel file
-   - A MY SW.csv file
+3. Drag and drop an Excel file with the following columns:![alt text](image.png)
 
 4. The application will validate the file format and process it accordingly
 

@@ -10,7 +10,7 @@ import sys
 class DropLabel(QLabel):
     def __init__(self):
         super().__init__()
-        self.setText("\n\n Drop KDP Excel File Here or MY SW.csv File\n\n")
+        self.setText("\n\n Drop Input Excel File Here \n\n")
         self.setStyleSheet("QLabel{border: 4px dashed #aaa;}")
         self.setAlignment(Qt.AlignCenter)
         self.setAcceptDrops(True)
@@ -29,7 +29,7 @@ class DropLabel(QLabel):
             event.accept()
             file_path = event.mimeData().urls()[0].toLocalFile()
             self.setText(f"File dropped: {file_path}")
-            if file_path.endswith((".xlsx", ".xls", ".csv")):
+            if file_path.endswith((".xlsx", ".xls")):
                 self.setText(f"✅ Loaded: {file_path}")
                 self.file_path = file_path
             else:
